@@ -1,0 +1,8 @@
+appium-python-client
+pytest
+requests                  # For API calls within tests
+pytest-sugar              # For a nicer console output
+allure-pytest             # For intergration with Allure
+pytest-xdist              # For parallel test execution
+pytest-rerunfailures      # To rerun flaky tests
+# selenium                # Optional, for WebView testing
