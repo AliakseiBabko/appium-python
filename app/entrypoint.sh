@@ -3,7 +3,6 @@ set -e  # Exit immediately if a command exits with a non-zero status
 
 APPIUM_HOST=${APPIUM_HOST:-0.0.0.0}
 APPIUM_PORT=${APPIUM_PORT:-4723}
-ADB_DEVICE=${ADB_DEVICE:-host.docker.internal:5555}
 APP_PACKAGE=${APP_PACKAGE:-io.appium.android.apis}
 
 # Function for logging

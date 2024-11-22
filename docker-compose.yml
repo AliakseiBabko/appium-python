@@ -1,7 +1,7 @@
 version: '3.8'
 services:
   android-emulator:
-    image: budtmo/docker-android:latest # Docker Hub image with Android emulator
+    image: budtmo/docker-android:latest
     privileged: true
     environment:
       - EMULATOR_DEVICE="Samsung Galaxy S10"
@@ -15,9 +15,9 @@ services:
       - android-network
 
   test-runner:
-    image: ababko/appium-python:latest  # Docker Hub image with Appium tests
+    image: ababko/appium-python:latest
     environment:
-      - ADB_DEVICE=${ADB_DEVICE:-android-emulator:5555}  # Fallback to android-emulator
+      - ADB_DEVICE=${ADB_DEVICE:-host.docker.internal:5555}
     volumes:
       - ./app:/app
       - ./reports:/app/reports
@@ -25,7 +25,7 @@ services:
       - android-emulator
     networks:
       - android-network
-    entrypoint: /app/entrypoint.sh  # Custom entrypoint script
+    entrypoint: /app/entrypoint.sh
 
 networks:
   android-network:

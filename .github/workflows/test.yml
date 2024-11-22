@@ -9,6 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Set the ADB_DEVICE for GitHub Actions
+      - name: Set ADB_DEVICE for GitHub Actions
+        run: |
+          echo "ADB_DEVICE=android-emulator:5555" >> $GITHUB_ENV
+
       # Pull your custom Docker image
       - name: Pull Custom Docker Image
         run: docker pull ababko/appium-python:latest
@@ -20,16 +25,17 @@ jobs:
       # Start emulator container
       - name: Start Android Emulator
         run: |
-          docker run -d --name android-container \
+          docker run -d --name android-emulator \
             -p 6080:6080 -p 4723:4723 \
             -e EMULATOR_DEVICE="Samsung Galaxy S10" \
             -e WEB_VNC=true \
             -e APPIUM=true \
             budtmo/docker-android:latest
 
-      # Start test container and run tests
+      # Run the tests using the Appium container and set ADB_DEVICE
       - name: Run Tests
         run: |
           docker run --rm --network host \
             -v $(pwd)/reports:/app/reports \
+            -e ADB_DEVICE=${ADB_DEVICE} \
             ababko/appium-python pytest --alluredir=reports/allure-results

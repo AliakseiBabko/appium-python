@@ -1,11 +1,13 @@
-# appium-python
-Sandbox repository for an appuum-python testing framework. Currently it runs againt locally installed Android studio. On the next step it will be possible to run it against an android emulator in another Docker container.
+# Appium-python
+Sandbox repository for an appium-python testing framework. It is based on a custom docker image with Appium and Pytest.
 
-# add your tests and apk file if needed
+# Add your tests and apk file if needed
 There are sample application and sample tests in the /app folder. Replace them with your files in the /app folder.
 
-# build docker image
-`docker build -t <your-image-name> .`
+# Update docker image with tests
+make changes you need
+build the image `docker build -t <your-image-name> .`
+push it to your docker hub repository or run locally after modifying docker-compose file.
 
-# run docker
-`docker run -it --rm <your-image-name> .`
+# Run tests in android emulator locally
+`docker-compose up -d`
