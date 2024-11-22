@@ -9,35 +9,27 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Step to download the APK file
-      - name: Download APK
-        run: curl -L -o ./app/ApiDemos-debug.apk https://github.com/appium-boneyard/sample-code/raw/master/sample-code/apps/ApiDemos/bin/ApiDemos-debug.apk
+      # Pull your custom Docker image
+      - name: Pull Custom Docker Image
+        run: docker pull ababko/appium-python:latest
 
-      # Step to build Docker image
-      - name: Build Docker Image
-        run: docker build -t mobile-test-framework .
+      # Pull the budtmo/docker-android image
+      - name: Pull Android Emulator Image
+        run: docker pull budtmo/docker-android:latest
 
-      # Step to run tests inside the Docker container and generate Allure report
-      - name: Run Android Tests and Generate Allure Report
+      # Start emulator container
+      - name: Start Android Emulator
         run: |
-          docker run -it --rm \
-            -v $(pwd)/app/ApiDemos-debug.apk:/app/app.apk \
+          docker run -d --name android-container \
+            -p 6080:6080 -p 4723:4723 \
+            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
+            -e WEB_VNC=true \
+            -e APPIUM=true \
+            budtmo/docker-android:latest
+
+      # Start test container and run tests
+      - name: Run Tests
+        run: |
+          docker run --rm --network host \
             -v $(pwd)/reports:/app/reports \
-            mobile-test-framework pytest --alluredir=reports/allure-results
-
-      - name: Install Allure
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
-          curl -sSL https://github.com/allure-framework/allure2/releases/download/2.32.0/allure-2.32.0.tgz | tar -xz -C /opt/
-          sudo ln -s /opt/allure-2.32.0/bin/allure /usr/bin/allure
-
-      - name: Generate Allure Report
-        run: |
-          allure generate reports/allure-results -o reports/allure-report --clean
-
-      - name: Upload Allure Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: android-allure-report
-          path: reports/allure-report
+            ababko/appium-python pytest --alluredir=reports/allure-results

@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # Exit immediately if a command exits with a non-zero status
 
 APPIUM_HOST=${APPIUM_HOST:-0.0.0.0}
 APPIUM_PORT=${APPIUM_PORT:-4723}
@@ -19,44 +20,44 @@ cleanup() {
         kill "${APPIUM_PID}"
         log "INFO" "Appium server stopped"
     fi
-    adb disconnect
-    adb kill-server
+    adb disconnect || true
+    adb kill-server || true
 }
 
 # Set trap for cleanup
 trap cleanup EXIT
 
-# Ensure ADB is connected to the Android device/emulator
+# Start ADB server
 log "INFO" "Starting ADB over TCP..."
-
-# Start the ADB server
 adb start-server || { log "ERROR" "Failed to start ADB server"; exit 1; }
 
 # Set ADB to listen on TCP (for connection via Docker)
 log "INFO" "Listening on TCP 5555..."
-adb tcpip 5555
+adb tcpip 5555 || true
 
 # Retry ADB connection until the device is authorized
 RETRY_COUNT=10
 for i in $(seq 1 "${RETRY_COUNT}"); do
     log "INFO" "Attempt ${i} to connect to ${ADB_DEVICE}..."
-    adb connect "${ADB_DEVICE}"
-    ADB_STATUS=$(adb devices | grep "${ADB_DEVICE}" | awk '{print $2}')
-    if [[ "${ADB_STATUS}" == "device" ]]; then
-        log "INFO" "ADB device connected and authorized."
-        break
-    elif [[ "${ADB_STATUS}" == "unauthorized" ]]; then
-        log "WARN" "Device unauthorized. Please confirm 'Allow USB Debugging' on the emulator."
-        sleep 10
+    if adb connect "${ADB_DEVICE}"; then
+        ADB_STATUS=$(adb devices | grep "${ADB_DEVICE}" | awk '{print $2}')
+        if [[ "${ADB_STATUS}" == "device" ]]; then
+            log "INFO" "ADB device connected and authorized."
+            break
+        elif [[ "${ADB_STATUS}" == "unauthorized" ]]; then
+            log "WARN" "Device unauthorized. Please confirm 'Allow USB Debugging' on the emulator."
+        fi
     fi
 
     if [[ ${i} -eq ${RETRY_COUNT} ]]; then
         log "ERROR" "Failed to connect to the device after ${RETRY_COUNT} attempts."
         exit 1
     fi
+    sleep 10
 done
 
-# Start Appium
+# Start Appium server
+log "INFO" "Starting Appium server..."
 appium --address "${APPIUM_HOST}" --port "${APPIUM_PORT}" &
 APPIUM_PID=$!
 sleep 10

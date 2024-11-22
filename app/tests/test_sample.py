@@ -76,15 +76,15 @@ def test_scroll_and_click_on_text(driver):
 
     # Change the orientation to landscape
     driver.orientation = "LANDSCAPE"
-    time.sleep(1)  # Wait for the screen transition
+    time.sleep(1)
     
     # Scroll to the Text option and click it
     driver.find_element(AppiumBy.ANDROID_UIAUTOMATOR,
                         'new UiScrollable(new UiSelector().scrollable(true)).scrollTextIntoView("Text")').click()
 
-        # Change the orientation back to portrait
+    # Change the orientation back to portrait
     driver.orientation = "PORTRAIT"
-    time.sleep(1)  # Wait for the screen transition
+    time.sleep(1)
 
 def test_click_Add_text(driver):
     """click Add button and check the default text in the LogTextBox."""
@@ -94,7 +94,6 @@ def test_click_Add_text(driver):
     # Click Add button to add text
     driver.find_element(AppiumBy.ACCESSIBILITY_ID, "Add").click()
 
-    textBox = driver.find_element(AppiumBy.ID, "io.appium.android.apis:id/text")
-
     # Verify that the text "This is a test" appeared in the LogTextBox
+    textBox = driver.find_element(AppiumBy.ID, "io.appium.android.apis:id/text")
     assert "This is a test" in textBox.text
