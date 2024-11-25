@@ -17,7 +17,7 @@ services:
   test-runner:
     image: ababko/appium-python:latest
     environment:
-      - ADB_DEVICE=${ADB_DEVICE:-host.docker.internal:5555}
+      - ADB_DEVICE=${ADB_DEVICE}
     volumes:
       - ./app:/app
       - ./reports:/app/reports

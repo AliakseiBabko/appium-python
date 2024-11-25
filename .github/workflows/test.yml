@@ -14,6 +14,12 @@ jobs:
         run: |
           echo "ADB_DEVICE=android-emulator:5555" >> $GITHUB_ENV
 
+      # Set up Docker Compose
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
       # Pull your custom Docker image
       - name: Pull Custom Docker Image
         run: docker pull ababko/appium-python:latest
@@ -22,20 +28,17 @@ jobs:
       - name: Pull Android Emulator Image
         run: docker pull budtmo/docker-android:latest
 
-      # Start emulator container
-      - name: Start Android Emulator
+      # Start Docker Compose
+      - name: Start Docker Compose
         run: |
-          docker run -d --name android-emulator \
-            -p 6080:6080 -p 4723:4723 \
-            -e EMULATOR_DEVICE="Samsung Galaxy S10" \
-            -e WEB_VNC=true \
-            -e APPIUM=true \
-            budtmo/docker-android:latest
+          docker-compose up -d  # Start the containers in detached mode
+          sleep 10  # Wait for the containers to initialize (you can adjust the sleep time as needed)
 
-      # Run the tests using the Appium container and set ADB_DEVICE
-      - name: Run Tests
+      # Run tests using the Appium container
+      - name: Run Tests with Appium
         run: |
-          docker run --rm --network host \
-            -v $(pwd)/reports:/app/reports \
-            -e ADB_DEVICE=${ADB_DEVICE} \
-            ababko/appium-python pytest --alluredir=reports/allure-results
+          docker-compose exec appium-tests pytest --alluredir=/app/reports/allure-results
+
+      # Clean up Docker Compose services
+      - name: Clean up Docker Compose
+        run: docker-compose down
