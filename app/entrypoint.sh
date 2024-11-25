@@ -16,44 +16,55 @@ log() {
 cleanup() {
     log "INFO" "Performing cleanup..."
     if [[ -n "${APPIUM_PID}" ]]; then
-        kill "${APPIUM_PID}"
+        kill "${APPIUM_PID}" || true
         log "INFO" "Appium server stopped"
     fi
     adb disconnect || true
     adb kill-server || true
 }
-
 # Set trap for cleanup
 trap cleanup EXIT
 
 # Start ADB server
-log "INFO" "Starting ADB over TCP..."
+log "INFO" "Starting ADB server..."
 adb start-server || { log "ERROR" "Failed to start ADB server"; exit 1; }
 
 # Set ADB to listen on TCP (for connection via Docker)
-log "INFO" "Listening on TCP 5555..."
+log "INFO" "Setting ADB to TCP mode on port 5555..."
 adb tcpip 5555 || true
 
 # Retry ADB connection until the device is authorized
+log "INFO" "Attempting to connect to the ADB device..."
 RETRY_COUNT=10
 for i in $(seq 1 "${RETRY_COUNT}"); do
     log "INFO" "Attempt ${i} to connect to ${ADB_DEVICE}..."
-    if adb connect "${ADB_DEVICE}"; then
-        ADB_STATUS=$(adb devices | grep "${ADB_DEVICE}" | awk '{print $2}')
-        if [[ "${ADB_STATUS}" == "device" ]]; then
-            log "INFO" "ADB device connected and authorized."
-            break
-        elif [[ "${ADB_STATUS}" == "unauthorized" ]]; then
-            log "WARN" "Device unauthorized. Please confirm 'Allow USB Debugging' on the emulator."
-        fi
+    
+    ADB_STATUS=$(adb devices | grep "${ADB_DEVICE}" | awk '{print $2}')
+    if [[ "${ADB_STATUS}" == "device" ]]; then
+        log "INFO" "ADB device connected and authorized."
+        break
+    elif [[ "${ADB_STATUS}" == "unauthorized" ]]; then
+        log "WARN" "Device unauthorized. Please confirm 'Allow USB Debugging' on the emulator."
+    elif [[ "${ADB_STATUS}" == "offline" ]]; then
+        log "WARN" "Device is offline. Please check the emulator connection."
+    else
+        adb connect "${ADB_DEVICE}" && log "INFO" "Successfully connected to ${ADB_DEVICE}." || log "WARN" "Failed to connect. Retrying..."
     fi
 
     if [[ ${i} -eq ${RETRY_COUNT} ]]; then
-        log "ERROR" "Failed to connect to the device after ${RETRY_COUNT} attempts."
+        log "ERROR" "Failed to connect after ${RETRY_COUNT} attempts."
         exit 1
     fi
     sleep 10
 done
+
+# Ensure the device is online
+log "INFO" "Waiting for ADB device to be online..."
+while ! adb devices | grep -q "${ADB_DEVICE}.*device"; do
+    log "WARN" "Device ${ADB_DEVICE} not online yet. Retrying..."
+    sleep 5
+done
+log "INFO" "ADB device is now online."
 
 # Start Appium server
 log "INFO" "Starting Appium server..."
@@ -66,28 +77,7 @@ if ! kill -0 "${APPIUM_PID}" 2>/dev/null; then
     log "ERROR" "Appium server failed to start. Exiting."
     exit 1
 fi
-log "INFO" "Appium server started"
-
-# Check if Appium server is responsive
-if ! curl -f "http://localhost:${APPIUM_PORT}/status" > /dev/null 2>&1; then
-    log "ERROR" "Appium server is not responding. Exiting."
-    exit 1
-fi
-
-# Wait for emulator to be ready with timeout
-TIMEOUT=300
-start_time=$(date +%s)
-adb wait-for-device
-while ! adb shell getprop sys.boot_completed | grep -m 1 "1" > /dev/null; do
-    current_time=$(date +%s)
-    elapsed=$((current_time - start_time))
-    if [[ ${elapsed} -ge ${TIMEOUT} ]]; then
-        log "ERROR" "Timeout waiting for emulator to be ready. Exiting."
-        exit 1
-    fi
-    log "INFO" "Waiting for emulator to be ready..."
-    sleep 5
-done
+log "INFO" "Appium server started successfully."
 
 # Run Appium Doctor to validate environment
 log "INFO" "Running Appium Doctor to validate Android environment..."
@@ -98,7 +88,7 @@ fi
 
 log "INFO" "Checking if APK is already installed..."
 
-# Check if the application is installed
+# Check if the application is installed (for the local env)
 if adb shell pm list packages | grep -q "${APP_PACKAGE}"; then
     log "INFO" "APK is already installed. Skipping installation."
 else
@@ -121,16 +111,16 @@ adb shell monkey -p "${APP_PACKAGE}" -c android.intent.category.LAUNCHER 1 || {
     exit 1
 }
 
-# Run Python tests in the virtual environment
-log "INFO" "Running Python tests..."
+# Run Python tests
+log "INFO" "Running tests..."
 /opt/venv/bin/pytest /app/tests --alluredir=/app/reports/allure-results
 
-# Generate the Allure report
+# Generate Allure report
 log "INFO" "Generating Allure Report..."
-if ! /opt/allure-2.32.0/bin/allure generate /app/reports/allure-results -o /app/reports/allure-report --clean; then
+/opt/allure-2.32.0/bin/allure generate /app/reports/allure-results -o /app/reports/allure-report --clean || {
     log "ERROR" "Failed to generate Allure report"
     exit 1
-fi
+}
 
 # Finish
-log "INFO" "Tests complete!"
+log "INFO" "Test scenario completed!"

@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   android-emulator:
     image: budtmo/docker-android:latest
@@ -8,9 +7,11 @@ services:
       - WEB_VNC=true
       - APPIUM=true
     ports:
-      - "6080:6080"
-      - "4723:4723"
-      - "5555:5555"
+      - "6080:6080"  # VNC
+      - "4723:4723"  # Appium
+      - "5555:5555"  # ADB (TCP)
+    devices:
+      - /dev/kvm:/dev/kvm
     networks:
       - android-network
 
