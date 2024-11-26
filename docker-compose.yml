@@ -14,6 +14,13 @@ services:
       - /dev/kvm:/dev/kvm
     networks:
       - android-network
+    entrypoint: >
+      bash -c "
+        emulator -avd '${EMULATOR_DEVICE}' -no-audio -no-window -gpu off &
+        adb wait-for-device &&
+        adb tcpip 5555 &&
+        tail -f /dev/null
+      "
 
   test-runner:
     image: ababko/appium-python:latest
