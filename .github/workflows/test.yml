@@ -44,9 +44,9 @@ jobs:
           docker-compose exec -T android-emulator emulator -list-avds
 
       # List AVD directory
-      - name: List AVD directory
+      - name: Verify AVD Directory
         run: |
-          docker-compose exec -T android-emulator ls -l $HOME/.android/avd
+          docker-compose exec -T android-emulator ls -l /home/androidusr/.android/avd
 
       # Run tests using the Appium container
       - name: Run Tests with Appium
@@ -59,8 +59,6 @@ jobs:
         run: |
           mkdir -p logs
           docker-compose logs > logs/docker-compose.log
-          docker-compose logs android-emulator > logs/android-emulator.log
-          docker-compose logs test-runner > logs/test-runner.log
 
       # Upload logs as artifacts for debugging
       - name: Upload logs as artifacts

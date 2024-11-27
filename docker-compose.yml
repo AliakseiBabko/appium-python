@@ -12,12 +12,14 @@ services:
       - "5555:5555"  # ADB (TCP)
     devices:
       - /dev/kvm:/dev/kvm
+    volumes:
+      - ./android-avd:/home/androidusr/.android/avd  # Map to the correct AVD directory
     networks:
       - android-network
     entrypoint: >
       bash -c "
         # Create AVD (if not already created)
-        if [ ! -d /home/runner/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
+        if [ ! -d /home/androidusr/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
           echo 'Creating AVD for Samsung Galaxy S10...'
           echo no | avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-30;google_apis;x86_64'
         fi
