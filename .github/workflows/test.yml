@@ -43,6 +43,23 @@ jobs:
         run: |
           docker-compose exec appium-tests pytest --alluredir=/app/reports/allure-results
 
+      # Save container logs as artifacts
+      - name: Save logs as artifacts
+        if: failure()  # Only save logs if a previous step fails
+        run: |
+          mkdir -p logs
+          docker-compose logs > logs/docker-compose.log
+          docker-compose logs android-emulator > logs/android-emulator.log
+          docker-compose logs test-runner > logs/test-runner.log
+        # Upload logs
+      - name: Upload logs
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: container-logs
+          path: logs/
+
+      
       # Clean up Docker Compose services
       - name: Clean up Docker Compose
         run: docker-compose down
