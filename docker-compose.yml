@@ -16,11 +16,14 @@ services:
       - android-network
     entrypoint: >
       bash -c "
-        emulator -avd '${EMULATOR_DEVICE}' -no-audio -no-window -gpu off &
+        # Create AVD (if not already created)
+        if [ ! -d /home/runner/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
+          echo 'Creating AVD for Samsung Galaxy S10...'
+          echo no | avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-30;google_apis;x86_64'
+        fi
+        # Start the emulator
+        emulator -avd samsung_galaxy_s10_13.0 -no-audio -no-window -gpu off &
         adb wait-for-device &&
-        while ! adb devices | grep -q 'device'; do
-          sleep 1
-        done &&
         adb tcpip 5555 &&
         tail -f /dev/null
       "
