@@ -3,7 +3,7 @@ services:
     image: budtmo/docker-android:latest
     privileged: true
     environment:
-      - EMULATOR_DEVICE="Samsung Galaxy S10"
+      - EMULATOR_DEVICE="samsung_galaxy_s10_13.0"
       - WEB_VNC=true
       - APPIUM=true
     ports:
