@@ -21,7 +21,7 @@ services:
         # Check if the AVD exists, create if not
         if [ ! -d /home/androidusr/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
           echo 'Creating AVD for Samsung Galaxy S10...'
-          avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64' -d ${EMULATOR_DEVICE} || { echo 'Failed to create AVD'; exit 1; }
+          avdmanager create avd -f -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64' -d 'Samsung Galaxy S10' -p /home/androidusr/.android/avd || { echo 'Failed to create AVD'; exit 1; }
         else
           echo 'AVD already exists.'
         fi
