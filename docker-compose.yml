@@ -3,7 +3,7 @@ services:
     image: budtmo/docker-android:latest
     privileged: true
     environment:
-      - EMULATOR_DEVICE="samsung_galaxy_s10_13.0"
+      - EMULATOR_DEVICE="Samsung Galaxy S10"
       - WEB_VNC=true
       - APPIUM=true
     ports:
@@ -18,22 +18,24 @@ services:
       - android-network
     entrypoint: >
       bash -c "
-        # Create AVD (if not already created)
+        # Check if the AVD exists, create if not
         if [ ! -d /home/androidusr/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
           echo 'Creating AVD for Samsung Galaxy S10...'
-          avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64' -d 'Samsung Galaxy S10'
+          avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64' -d ${EMULATOR_DEVICE} || { echo 'Failed to create AVD'; exit 1; }
+        else
+          echo 'AVD already exists.'
         fi
-        # Start the emulator in the background
+
+        # Start the emulator
+        echo 'Starting the emulator...'
         emulator -avd samsung_galaxy_s10_13.0 -no-audio -no-window -gpu off &
         
-        # Wait for emulator to fully start
-        echo 'Waiting for emulator to start...'
-        adb wait-for-device &&
+        # Wait for the emulator to fully boot (give it time)
+        adb wait-for-device || { echo 'Failed to connect to device'; exit 1; }
+        adb tcpip 5555 || { echo 'Failed to set ADB to TCP mode'; exit 1; }
 
-        # Set ADB to TCP mode on port 5555
-        adb tcpip 5555 &&
-
-        # Tail to keep container running
+        # Ensure emulator is running before proceeding
+        echo 'Emulator started, ready for tests...'
         tail -f /dev/null
       "
 
