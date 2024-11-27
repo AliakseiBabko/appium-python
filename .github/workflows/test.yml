@@ -9,6 +9,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Ensure entrypoint.sh is executable
+      - name: Ensure entrypoint.sh is executable
+        run: chmod +x app/entrypoint.sh
+
       # Set the ADB_DEVICE for GitHub Actions
       - name: Set ADB_DEVICE for GitHub Actions
         run: |
