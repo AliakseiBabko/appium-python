@@ -37,6 +37,11 @@ jobs:
         run: |
           docker-compose up -d  # Start the containers in detached mode
           sleep 10  # Wait for the containers to initialize (you can adjust the sleep time as needed)
+      
+      # List available System Images
+      - name: List Available System Images
+        run: |
+          docker-compose exec -T android-emulator sdkmanager --list
 
       # List available AVDs in the emulator container
       - name: List AVDs

@@ -21,12 +21,19 @@ services:
         # Create AVD (if not already created)
         if [ ! -d /home/androidusr/.android/avd/samsung_galaxy_s10_13.0.avd ]; then
           echo 'Creating AVD for Samsung Galaxy S10...'
-          echo no | avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64'
+          avdmanager create avd -n samsung_galaxy_s10_13.0 -k 'system-images;android-33;google_apis;x86_64' -d 'Samsung Galaxy S10'
         fi
-        # Start the emulator
+        # Start the emulator in the background
         emulator -avd samsung_galaxy_s10_13.0 -no-audio -no-window -gpu off &
+        
+        # Wait for emulator to fully start
+        echo 'Waiting for emulator to start...'
         adb wait-for-device &&
+
+        # Set ADB to TCP mode on port 5555
         adb tcpip 5555 &&
+
+        # Tail to keep container running
         tail -f /dev/null
       "
 
