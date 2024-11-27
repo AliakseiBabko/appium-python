@@ -43,6 +43,11 @@ jobs:
         run: |
           docker-compose exec -T android-emulator emulator -list-avds
 
+      # List AVD directory
+      - name: List AVD directory
+        run: |
+          docker-compose exec -T android-emulator ls -l $HOME/.android/avd
+
       # Run tests using the Appium container
       - name: Run Tests with Appium
         run: |

@@ -18,6 +18,9 @@ services:
       bash -c "
         emulator -avd '${EMULATOR_DEVICE}' -no-audio -no-window -gpu off &
         adb wait-for-device &&
+        while ! adb devices | grep -q 'device'; do
+          sleep 1
+        done &&
         adb tcpip 5555 &&
         tail -f /dev/null
       "
