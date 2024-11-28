@@ -1,0 +1,78 @@
+name: Mobile App Tests with Allure Report 
+
+on: [workflow_dispatch]
+
+jobs:
+  android-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Ensure entrypoint.sh is executable
+      - name: Ensure entrypoint.sh is executable
+        run: chmod +x app/entrypoint.sh
+
+      # Set the ADB_DEVICE for GitHub Actions
+      - name: Set ADB_DEVICE for GitHub Actions
+        run: |
+          echo "ADB_DEVICE=android-emulator:5555" >> $GITHUB_ENV
+
+      # Set up Docker Compose
+      - name: Set up Docker Compose
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      # Pull your custom Docker image
+      - name: Pull Custom Docker Image
+        run: docker pull ababko/appium-python:latest
+
+      # Pull the budtmo/docker-android image
+      - name: Pull Android Emulator Image
+        run: docker pull budtmo/docker-android:latest
+
+      # Start Docker Compose
+      - name: Start Docker Compose
+        run: |
+          docker-compose up -d  # Start the containers in detached mode
+          sleep 10  # Wait for the containers to initialize (you can adjust the sleep time as needed)
+      
+      # List available System Images
+      - name: List Available System Images
+        run: |
+          docker-compose exec -T android-emulator sdkmanager --list
+
+      # List available AVDs in the emulator container
+      - name: List AVDs
+        run: |
+          docker-compose exec -T android-emulator emulator -list-avds
+
+      # List AVD directory
+      - name: Verify AVD Directory
+        run: |
+          docker-compose exec -T android-emulator ls -l /home/androidusr/.android/avd
+
+      # Run tests using the Appium container
+      - name: Run Tests with Appium
+        run: |
+          docker-compose exec appium-tests pytest --alluredir=/app/reports/allure-results
+
+      # Dump logs in case of failure
+      - name: Dump logs on failure
+        if: failure()
+        run: |
+          mkdir -p logs
+          docker-compose logs > logs/docker-compose.log
+
+      # Upload logs as artifacts for debugging
+      - name: Upload logs as artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-logs
+          path: logs/
+
+      # Clean up Docker Compose services
+      - name: Clean up Docker Compose
+        run: docker-compose down
